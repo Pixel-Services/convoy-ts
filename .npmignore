@@ -1,0 +1,23 @@
+# Source files
+src/
+test.ts
+
+# Development files
+.git/
+.gitignore
+.npmignore
+tsconfig.json
+*.md
+!README.md
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Test files
+coverage/
+__tests__/
+*.test.ts
+*.spec.ts 
