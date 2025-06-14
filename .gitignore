@@ -89,7 +89,6 @@ out
 
 # Nuxt.js build / generate output
 .nuxt
-dist
 
 # Gatsby files
 .cache/
@@ -142,7 +141,6 @@ yarn-debug.log*
 yarn-error.log*
 
 # TypeScript
-dist/
 *.tsbuildinfo
 
 # IDE
