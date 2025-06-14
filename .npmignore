@@ -19,5 +19,6 @@ tsconfig.json
 # Test files
 coverage/
 __tests__/
+tests/
 *.test.ts
 *.spec.ts 
