@@ -6,7 +6,7 @@ import { ConvoyConfig, ApiResponse, ApiError } from '../types';
  */
 export class ConvoyClient {
   private readonly client: AxiosInstance;
-  private readonly config: ConvoyConfig;
+  protected readonly config: ConvoyConfig;
 
   /**
    * Creates a new instance of the Convoy client

@@ -7,6 +7,10 @@ import {
   ServerListParams,
   ServerStatus,
   DeleteServerParams,
+  ServerState,
+  ConsoleType,
+  ConsoleSession,
+  ServerImpl,
 } from '../types/server';
 import { buildListParams } from '../utils/filters';
 
@@ -20,8 +24,11 @@ export class ServerEndpoints extends ConvoyClient {
    * @returns Promise with list of servers
    */
   async listServers(params?: ServerListParams): Promise<Server[]> {
-    const response = await this.get<Server[]>('/servers', buildListParams(params));
-    return response.data;
+    const response = await this.get<Server[]>('/api/application/servers', buildListParams(params));
+    if (!response.data) {
+      return [];
+    }
+    return response.data.map(server => new ServerImpl(server, this));
   }
 
   /**
@@ -30,8 +37,8 @@ export class ServerEndpoints extends ConvoyClient {
    * @returns Promise with server details
    */
   async getServer(uuid: string): Promise<Server> {
-    const response = await this.get<Server>(`/servers/${uuid}`);
-    return response.data;
+    const response = await this.get<{ data: Server }>(`/api/application/servers/${uuid}`);
+    return new ServerImpl(response.data.data, this);
   }
 
   /**
@@ -40,8 +47,8 @@ export class ServerEndpoints extends ConvoyClient {
    * @returns Promise with the created server
    */
   async createServer(data: CreateServerRequest): Promise<Server> {
-    const response = await this.post<Server>('/servers', data);
-    return response.data;
+    const response = await this.post<{ data: Server }>('/api/application/servers', data);
+    return new ServerImpl(response.data.data, this);
   }
 
   /**
@@ -51,8 +58,8 @@ export class ServerEndpoints extends ConvoyClient {
    * @returns Promise with the updated server
    */
   async updateServer(uuid: string, data: UpdateServerRequest): Promise<Server> {
-    const response = await this.patch<Server>(`/servers/${uuid}`, data);
-    return response.data;
+    const response = await this.patch<{ data: Server }>(`/api/application/servers/${uuid}`, data);
+    return new ServerImpl(response.data.data, this);
   }
 
   /**
@@ -62,8 +69,8 @@ export class ServerEndpoints extends ConvoyClient {
    * @returns Promise with the updated server
    */
   async updateServerBuild(uuid: string, data: UpdateServerBuildRequest): Promise<Server> {
-    const response = await this.patch<Server>(`/servers/${uuid}/settings/build`, data);
-    return response.data;
+    const response = await this.patch<{ data: Server }>(`/api/application/servers/${uuid}/settings/build`, data);
+    return new ServerImpl(response.data.data, this);
   }
 
   /**
@@ -73,7 +80,7 @@ export class ServerEndpoints extends ConvoyClient {
    * @returns Promise with the deletion result
    */
   async deleteServer(uuid: string, params?: { no_purge?: boolean }): Promise<void> {
-    await this.delete<void>(`/servers/${uuid}?${new URLSearchParams(params as Record<string, string>).toString()}`);
+    await this.delete<void>(`/api/application/servers/${uuid}?${new URLSearchParams(params as Record<string, string>).toString()}`);
   }
 
   /**
@@ -82,7 +89,7 @@ export class ServerEndpoints extends ConvoyClient {
    * @returns Promise with the operation result
    */
   async suspendServer(uuid: string): Promise<void> {
-    await this.post<void>(`/servers/${uuid}/settings/suspend`, {});
+    await this.post<void>(`/api/application/servers/${uuid}/settings/suspend`, {});
   }
 
   /**
@@ -91,7 +98,7 @@ export class ServerEndpoints extends ConvoyClient {
    * @returns Promise with the operation result
    */
   async unsuspendServer(uuid: string): Promise<void> {
-    await this.post<void>(`/servers/${uuid}/settings/unsuspend`, {});
+    await this.post<void>(`/api/application/servers/${uuid}/settings/unsuspend`, {});
   }
 
   /**
@@ -100,7 +107,7 @@ export class ServerEndpoints extends ConvoyClient {
    * @returns Promise with the updated server status
    */
   async startServer(id: number): Promise<Server> {
-    const response = await this.post<Server>(`/servers/${id}/start`, {});
+    const response = await this.post<Server>(`/api/application/servers/${id}/start`, {});
     return response.data;
   }
 
@@ -110,7 +117,7 @@ export class ServerEndpoints extends ConvoyClient {
    * @returns Promise with the updated server status
    */
   async stopServer(id: number): Promise<Server> {
-    const response = await this.post<Server>(`/servers/${id}/stop`, {});
+    const response = await this.post<Server>(`/api/application/servers/${id}/stop`, {});
     return response.data;
   }
 
@@ -120,7 +127,7 @@ export class ServerEndpoints extends ConvoyClient {
    * @returns Promise with the updated server status
    */
   async restartServer(id: number): Promise<Server> {
-    const response = await this.post<Server>(`/servers/${id}/restart`, {});
+    const response = await this.post<Server>(`/api/application/servers/${id}/restart`, {});
     return response.data;
   }
 
@@ -130,7 +137,33 @@ export class ServerEndpoints extends ConvoyClient {
    * @returns Promise with the server status
    */
   async getServerStatus(id: number): Promise<ServerStatus> {
-    const response = await this.get<{ status: ServerStatus }>(`/servers/${id}/status`);
+    const response = await this.get<{ status: ServerStatus }>(`/api/application/servers/${id}/status`);
     return response.data.status;
+  }
+
+  /**
+   * Get server state
+   * @param uuid - The server UUID
+   * @returns Promise with the server state
+   */
+  async getState(uuid: string): Promise<ServerState> {
+    const response = await this.get<{ data: ServerState }>(`/api/application/servers/${uuid}/state`);
+    return response.data.data;
+  }
+
+  /**
+   * Create a console session for a server
+   * @param uuid - Server UUID
+   * @param type - Console type
+   * @returns Promise with console session details
+   * @warning This method requires a Convoy instance with the console session endpoint handler implemented.
+   *          It will not work on any version of Convoy that doesn't have this feature.
+   */
+  async createConsoleSession(uuid: string, type: ConsoleType): Promise<ConsoleSession> {
+    const response = await this.post<ConsoleSession>(`/api/application/servers/${uuid}/create-console-session`, { type });
+    if ('ticket' in response.data) {
+      return { ...response.data, consoleType: type };
+    }
+    return response.data;
   }
 } 

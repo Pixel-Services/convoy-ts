@@ -17,8 +17,8 @@ export class TemplateEndpoints extends ConvoyClient {
    * (from the templates array) and NOT the template group's UUID.
    */
   async getNodeTemplates(nodeId: number): Promise<TemplateGroup[]> {
-    const response = await this.get<TemplateGroupsResponse>(`/api/application/nodes/${nodeId}/template-groups`);
-    return response.data.data;
+    const response = await this.get<TemplateGroup[]>(`/api/application/nodes/${nodeId}/template-groups`);
+    return response.data;
   }
 
   /**

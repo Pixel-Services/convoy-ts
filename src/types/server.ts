@@ -1,3 +1,7 @@
+import { ConvoyClient } from '../client/ConvoyClient';
+import { ApiResponse, ConvoyConfig } from '../types';
+import { ServerEndpoints } from '../endpoints/server';
+
 /**
  * Server status types
  */
@@ -55,6 +59,17 @@ export interface ServerUsages {
 }
 
 /**
+ * Server state response
+ */
+export interface ServerState {
+  state: ServerStatus;
+  cpu_used: number;
+  memory_total: number;
+  memory_used: number;
+  uptime: number;
+}
+
+/**
  * Server model
  */
 export interface Server {
@@ -101,6 +116,8 @@ export interface Server {
       servers_count: number;
     };
   };
+  getState(): Promise<ServerState>;
+  createConsoleSession(type: ConsoleType): Promise<ConsoleSession>;
 }
 
 /**
@@ -176,4 +193,109 @@ export interface ServerListParams {
  */
 export interface DeleteServerParams {
   no_purge?: boolean;
+}
+
+/**
+ * Console session type
+ */
+export enum ConsoleType {
+  NOVNC = 'novnc',
+  XTERMJS = 'xtermjs'
+}
+
+/**
+ * Base console session properties
+ */
+interface BaseConsoleSession {
+  fqdn: string;
+  port: number;
+}
+
+/**
+ * Console session with coterm enabled
+ */
+export interface CotermConsoleSession extends BaseConsoleSession {
+  type: 'coterm';
+  is_tls_enabled: boolean;
+  token: string;
+}
+
+/**
+ * Console session without coterm
+ */
+export interface StandardConsoleSession extends BaseConsoleSession {
+  type: 'standard';
+  ticket: string;
+  node: string;
+  vmid: number;
+  consoleType: ConsoleType;
+}
+
+/**
+ * Console session response
+ */
+export type ConsoleSession = CotermConsoleSession | StandardConsoleSession;
+
+/**
+ * Server implementation class that attaches methods to server objects
+ */
+export class ServerImpl implements Server {
+  id!: string;
+  uuid!: string;
+  node_id!: number;
+  hostname!: string;
+  name!: string;
+  description!: string | null;
+  status!: ServerStatus | null;
+  usages!: ServerUsages;
+  limits!: ServerLimits;
+  user_id!: number;
+  vmid!: number;
+  internal_id!: number;
+  user?: {
+    data: {
+      id: number;
+      name: string;
+      email: string;
+      email_verified_at: string | null;
+      root_admin: boolean;
+      servers_count: number;
+    };
+  };
+  node?: {
+    data: {
+      id: number;
+      location_id: number;
+      name: string;
+      cluster: string;
+      fqdn: string;
+      port: number;
+      memory: number;
+      memory_overallocate: number;
+      memory_allocated: number;
+      disk: number;
+      disk_overallocate: number;
+      disk_allocated: number;
+      vm_storage: string;
+      backup_storage: string;
+      iso_storage: string;
+      network: string;
+      servers_count: number;
+    };
+  };
+
+  private client: ServerEndpoints;
+
+  constructor(data: Server, client: ServerEndpoints) {
+    Object.assign(this, data);
+    this.client = client;
+  }
+
+  async getState(): Promise<ServerState> {
+    return this.client.getState(this.uuid);
+  }
+
+  async createConsoleSession(type: ConsoleType): Promise<ConsoleSession> {
+    return this.client.createConsoleSession(this.uuid, type);
+  }
 } 
