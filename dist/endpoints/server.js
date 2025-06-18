@@ -9,6 +9,13 @@ const filters_1 = require("../utils/filters");
  */
 class ServerEndpoints extends ConvoyClient_1.ConvoyClient {
     /**
+     * Get the client configuration
+     * @returns The client configuration
+     */
+    getConfig() {
+        return this.config;
+    }
+    /**
      * List all servers
      * @param params - Optional filtering and pagination parameters
      * @returns Promise with list of servers
@@ -84,40 +91,69 @@ class ServerEndpoints extends ConvoyClient_1.ConvoyClient {
         await this.post(`/api/application/servers/${uuid}/settings/unsuspend`, {});
     }
     /**
-     * Start a server
-     * @param id - The server ID
-     * @returns Promise with the updated server status
+     * Change the server state
+     * @param uuid - The server UUID
+     * @param action - The state action to perform
+     * @returns Promise that resolves when the state change is complete
+     * @throws Error if the state change is not allowed
      */
-    async startServer(id) {
-        const response = await this.post(`/api/application/servers/${id}/start`, {});
-        return response.data;
+    async alterState(uuid, action) {
+        const currentState = await this.getState(uuid);
+        switch (action) {
+            case server_1.ServerStateAction.START:
+                if (currentState.state === server_1.ServerStatus.RUNNING) {
+                    throw new Error('Server is already running');
+                }
+                break;
+            case server_1.ServerStateAction.RESTART:
+                if (currentState.state !== server_1.ServerStatus.RUNNING) {
+                    throw new Error('Server must be running to restart');
+                }
+                break;
+            case server_1.ServerStateAction.KILL:
+                if (currentState.state === server_1.ServerStatus.STOPPED) {
+                    throw new Error('Server is already stopped');
+                }
+                break;
+            case server_1.ServerStateAction.SHUTDOWN:
+                if (currentState.state === server_1.ServerStatus.STOPPED) {
+                    throw new Error('Server is already stopped');
+                }
+                break;
+        }
+        await this.patch(`/api/client/servers/${uuid}/state`, { state: action });
     }
     /**
-     * Stop a server
-     * @param id - The server ID
-     * @returns Promise with the updated server status
+     * Start the server
+     * @param uuid - The server UUID
+     * @returns Promise that resolves when the server is started
      */
-    async stopServer(id) {
-        const response = await this.post(`/api/application/servers/${id}/stop`, {});
-        return response.data;
+    async start(uuid) {
+        await this.alterState(uuid, server_1.ServerStateAction.START);
     }
     /**
-     * Restart a server
-     * @param id - The server ID
-     * @returns Promise with the updated server status
+     * Restart the server
+     * @param uuid - The server UUID
+     * @returns Promise that resolves when the server is restarted
      */
-    async restartServer(id) {
-        const response = await this.post(`/api/application/servers/${id}/restart`, {});
-        return response.data;
+    async restart(uuid) {
+        await this.alterState(uuid, server_1.ServerStateAction.RESTART);
     }
     /**
-     * Get server status
-     * @param id - The server ID
-     * @returns Promise with the server status
+     * Kill the server
+     * @param uuid - The server UUID
+     * @returns Promise that resolves when the server is killed
      */
-    async getServerStatus(id) {
-        const response = await this.get(`/api/application/servers/${id}/status`);
-        return response.data.status;
+    async kill(uuid) {
+        await this.alterState(uuid, server_1.ServerStateAction.KILL);
+    }
+    /**
+     * Shutdown the server
+     * @param uuid - The server UUID
+     * @returns Promise that resolves when the server is shut down
+     */
+    async shutdown(uuid) {
+        await this.alterState(uuid, server_1.ServerStateAction.SHUTDOWN);
     }
     /**
      * Get server state
@@ -125,8 +161,8 @@ class ServerEndpoints extends ConvoyClient_1.ConvoyClient {
      * @returns Promise with the server state
      */
     async getState(uuid) {
-        const response = await this.get(`/api/application/servers/${uuid}/state`);
-        return response.data.data;
+        const response = await this.get(`/api/client/servers/${uuid}/state`);
+        return response.data;
     }
     /**
      * Create a console session for a server
@@ -142,6 +178,24 @@ class ServerEndpoints extends ConvoyClient_1.ConvoyClient {
             return { ...response.data, consoleType: type };
         }
         return response.data;
+    }
+    /**
+     * Reinstall a server
+     * @param uuid - The server UUID
+     * @param params - The reinstall parameters
+     * @returns Promise that resolves when the reinstall is complete
+     */
+    async reinstall(uuid, params) {
+        await this.post(`/api/client/servers/${uuid}/settings/reinstall`, params);
+    }
+    /**
+     * Rename a server
+     * @param uuid - The server UUID
+     * @param params - The rename parameters containing name and hostname
+     * @returns Promise that resolves when the rename is complete
+     */
+    async rename(uuid, params) {
+        await this.post(`/api/client/servers/${uuid}/settings/rename`, params);
     }
 }
 exports.ServerEndpoints = ServerEndpoints;

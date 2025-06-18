@@ -23,6 +23,7 @@ const node_address_1 = require("./endpoints/node-address");
 const ipam_1 = require("./endpoints/ipam");
 const user_1 = require("./endpoints/user");
 const template_1 = require("./endpoints/template");
+const ConvoyClient_1 = require("./client/ConvoyClient");
 __exportStar(require("./types"), exports);
 __exportStar(require("./types/server"), exports);
 __exportStar(require("./types/location"), exports);
@@ -39,6 +40,7 @@ __exportStar(require("./endpoints/node-address"), exports);
 __exportStar(require("./endpoints/ipam"), exports);
 __exportStar(require("./endpoints/user"), exports);
 __exportStar(require("./endpoints/template"), exports);
+__exportStar(require("./endpoints/backup"), exports);
 /**
  * Main Convoy client class
  */
@@ -48,6 +50,7 @@ class Convoy {
      * @param config - The configuration for the client
      */
     constructor(config) {
+        const client = new ConvoyClient_1.ConvoyClient(config);
         this.servers = new server_1.ServerEndpoints(config);
         this.locations = new location_1.LocationEndpoints(config);
         this.nodes = new node_1.NodeEndpoints(config);
@@ -55,6 +58,14 @@ class Convoy {
         this.ipam = new ipam_1.IpamEndpoints(config);
         this.users = new user_1.UserEndpoints(config);
         this.templates = new template_1.TemplateEndpoints(config);
+        // Expose the HTTP methods through the api property
+        this.api = {
+            get: (path, params) => client.get(path, params),
+            post: (path, data) => client.post(path, data),
+            put: (path, data) => client.put(path, data),
+            delete: (path) => client.delete(path),
+            patch: (path, data) => client.patch(path, data),
+        };
     }
 }
 exports.Convoy = Convoy;

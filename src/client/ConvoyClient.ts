@@ -47,7 +47,7 @@ export class ConvoyClient {
    * @param params - Optional query parameters
    * @returns Promise with the API response
    */
-  protected async get<T>(path: string, params?: Record<string, any>): Promise<ApiResponse<T>> {
+  public async get<T>(path: string, params?: Record<string, any>): Promise<ApiResponse<T>> {
     const response = await this.client.get<ApiResponse<T>>(path, { params });
     return response.data;
   }
@@ -58,7 +58,7 @@ export class ConvoyClient {
    * @param data - The data to send
    * @returns Promise with the API response
    */
-  protected async post<T>(path: string, data: any): Promise<ApiResponse<T>> {
+  public async post<T>(path: string, data: any): Promise<ApiResponse<T>> {
     const response = await this.client.post<ApiResponse<T>>(path, data);
     return response.data;
   }
@@ -69,7 +69,7 @@ export class ConvoyClient {
    * @param data - The data to send
    * @returns Promise with the API response
    */
-  protected async put<T>(path: string, data: any): Promise<ApiResponse<T>> {
+  public async put<T>(path: string, data: any): Promise<ApiResponse<T>> {
     const response = await this.client.put<ApiResponse<T>>(path, data);
     return response.data;
   }
@@ -79,7 +79,7 @@ export class ConvoyClient {
    * @param path - The API endpoint path
    * @returns Promise with the API response
    */
-  protected async delete<T>(path: string): Promise<ApiResponse<T>> {
+  public async delete<T>(path: string): Promise<ApiResponse<T>> {
     const response = await this.client.delete<ApiResponse<T>>(path);
     return response.data;
   }
@@ -90,7 +90,7 @@ export class ConvoyClient {
    * @param data - The data to send
    * @returns Promise with the API response
    */
-  protected async patch<T>(path: string, data: any): Promise<ApiResponse<T>> {
+  public async patch<T>(path: string, data: any): Promise<ApiResponse<T>> {
     const response = await this.client.patch<ApiResponse<T>>(path, data);
     return response.data;
   }

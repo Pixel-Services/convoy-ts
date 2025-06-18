@@ -1,9 +1,19 @@
 import { ConvoyClient } from '../client/ConvoyClient';
-import { Server, CreateServerRequest, UpdateServerRequest, UpdateServerBuildRequest, ServerListParams, ServerStatus, ServerState, ConsoleType, ConsoleSession } from '../types/server';
+import { Server, CreateServerRequest, UpdateServerRequest, UpdateServerBuildRequest, ServerListParams, ServerState, ConsoleType, ConsoleSession, ReinstallServerRequest, ServerStateAction } from '../types/server';
+import { ConvoyConfig } from '../types';
+interface RenameServerRequest {
+    name: string;
+    hostname: string;
+}
 /**
  * Server endpoints implementation
  */
 export declare class ServerEndpoints extends ConvoyClient {
+    /**
+     * Get the client configuration
+     * @returns The client configuration
+     */
+    getConfig(): ConvoyConfig;
     /**
      * List all servers
      * @param params - Optional filtering and pagination parameters
@@ -58,29 +68,37 @@ export declare class ServerEndpoints extends ConvoyClient {
      */
     unsuspendServer(uuid: string): Promise<void>;
     /**
-     * Start a server
-     * @param id - The server ID
-     * @returns Promise with the updated server status
+     * Change the server state
+     * @param uuid - The server UUID
+     * @param action - The state action to perform
+     * @returns Promise that resolves when the state change is complete
+     * @throws Error if the state change is not allowed
      */
-    startServer(id: number): Promise<Server>;
+    alterState(uuid: string, action: ServerStateAction): Promise<void>;
     /**
-     * Stop a server
-     * @param id - The server ID
-     * @returns Promise with the updated server status
+     * Start the server
+     * @param uuid - The server UUID
+     * @returns Promise that resolves when the server is started
      */
-    stopServer(id: number): Promise<Server>;
+    start(uuid: string): Promise<void>;
     /**
-     * Restart a server
-     * @param id - The server ID
-     * @returns Promise with the updated server status
+     * Restart the server
+     * @param uuid - The server UUID
+     * @returns Promise that resolves when the server is restarted
      */
-    restartServer(id: number): Promise<Server>;
+    restart(uuid: string): Promise<void>;
     /**
-     * Get server status
-     * @param id - The server ID
-     * @returns Promise with the server status
+     * Kill the server
+     * @param uuid - The server UUID
+     * @returns Promise that resolves when the server is killed
      */
-    getServerStatus(id: number): Promise<ServerStatus>;
+    kill(uuid: string): Promise<void>;
+    /**
+     * Shutdown the server
+     * @param uuid - The server UUID
+     * @returns Promise that resolves when the server is shut down
+     */
+    shutdown(uuid: string): Promise<void>;
     /**
      * Get server state
      * @param uuid - The server UUID
@@ -96,4 +114,19 @@ export declare class ServerEndpoints extends ConvoyClient {
      *          It will not work on any version of Convoy that doesn't have this feature.
      */
     createConsoleSession(uuid: string, type: ConsoleType): Promise<ConsoleSession>;
+    /**
+     * Reinstall a server
+     * @param uuid - The server UUID
+     * @param params - The reinstall parameters
+     * @returns Promise that resolves when the reinstall is complete
+     */
+    reinstall(uuid: string, params: ReinstallServerRequest): Promise<void>;
+    /**
+     * Rename a server
+     * @param uuid - The server UUID
+     * @param params - The rename parameters containing name and hostname
+     * @returns Promise that resolves when the rename is complete
+     */
+    rename(uuid: string, params: RenameServerRequest): Promise<void>;
 }
+export {};

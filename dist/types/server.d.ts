@@ -1,4 +1,5 @@
 import { ServerEndpoints } from '../endpoints/server';
+import { BackupEndpoints } from '../endpoints/backup';
 /**
  * Server status types
  */
@@ -8,6 +9,15 @@ export declare enum ServerStatus {
     SUSPENDED = "suspended",
     ERROR = "error",
     INSTALLING = "installing"
+}
+/**
+ * Server state actions
+ */
+export declare enum ServerStateAction {
+    START = "start",
+    RESTART = "restart",
+    KILL = "kill",
+    SHUTDOWN = "shutdown"
 }
 /**
  * Server type
@@ -109,6 +119,14 @@ export interface Server {
     };
     getState(): Promise<ServerState>;
     createConsoleSession(type: ConsoleType): Promise<ConsoleSession>;
+    reinstall(params: ReinstallServerRequest): Promise<void>;
+    start(): Promise<void>;
+    restart(): Promise<void>;
+    kill(): Promise<void>;
+    shutdown(): Promise<void>;
+    changeName(newName: string): Promise<void>;
+    changeHostname(newHostname: string): Promise<void>;
+    backups: BackupEndpoints;
 }
 /**
  * Create server request
@@ -263,8 +281,24 @@ export declare class ServerImpl implements Server {
         };
     };
     private client;
+    readonly backups: BackupEndpoints;
     constructor(data: Server, client: ServerEndpoints);
     getState(): Promise<ServerState>;
     createConsoleSession(type: ConsoleType): Promise<ConsoleSession>;
+    reinstall(params: ReinstallServerRequest): Promise<void>;
+    start(): Promise<void>;
+    restart(): Promise<void>;
+    kill(): Promise<void>;
+    shutdown(): Promise<void>;
+    changeName(newName: string): Promise<void>;
+    changeHostname(newHostname: string): Promise<void>;
+}
+/**
+ * Reinstall server request
+ */
+export interface ReinstallServerRequest {
+    account_password: string;
+    start_on_completion: boolean;
+    template_uuid: string;
 }
 export {};

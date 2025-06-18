@@ -1,6 +1,7 @@
 import { ConvoyClient } from '../client/ConvoyClient';
 import { ApiResponse, ConvoyConfig } from '../types';
 import { ServerEndpoints } from '../endpoints/server';
+import { BackupEndpoints } from '../endpoints/backup';
 
 /**
  * Server status types
@@ -11,6 +12,16 @@ export enum ServerStatus {
   SUSPENDED = 'suspended',
   ERROR = 'error',
   INSTALLING = 'installing',
+}
+
+/**
+ * Server state actions
+ */
+export enum ServerStateAction {
+  START = 'start',
+  RESTART = 'restart',
+  KILL = 'kill',
+  SHUTDOWN = 'shutdown'
 }
 
 /**
@@ -118,6 +129,14 @@ export interface Server {
   };
   getState(): Promise<ServerState>;
   createConsoleSession(type: ConsoleType): Promise<ConsoleSession>;
+  reinstall(params: ReinstallServerRequest): Promise<void>;
+  start(): Promise<void>;
+  restart(): Promise<void>;
+  kill(): Promise<void>;
+  shutdown(): Promise<void>;
+  changeName(newName: string): Promise<void>;
+  changeHostname(newHostname: string): Promise<void>;
+  backups: BackupEndpoints;
 }
 
 /**
@@ -285,10 +304,12 @@ export class ServerImpl implements Server {
   };
 
   private client: ServerEndpoints;
+  public readonly backups: BackupEndpoints;
 
   constructor(data: Server, client: ServerEndpoints) {
     Object.assign(this, data);
     this.client = client;
+    this.backups = new BackupEndpoints(client.getConfig(), this.uuid);
   }
 
   async getState(): Promise<ServerState> {
@@ -298,4 +319,41 @@ export class ServerImpl implements Server {
   async createConsoleSession(type: ConsoleType): Promise<ConsoleSession> {
     return this.client.createConsoleSession(this.uuid, type);
   }
+
+  async reinstall(params: ReinstallServerRequest): Promise<void> {
+    await this.client.reinstall(this.uuid, params);
+  }
+
+  async start(): Promise<void> {
+    await this.client.start(this.uuid);
+  }
+
+  async restart(): Promise<void> {
+    await this.client.restart(this.uuid);
+  }
+
+  async kill(): Promise<void> {
+    await this.client.kill(this.uuid);
+  }
+
+  async shutdown(): Promise<void> {
+    await this.client.shutdown(this.uuid);
+  }
+
+  async changeName(newName: string): Promise<void> {
+    await this.client.rename(this.uuid, { name: newName, hostname: this.hostname });
+  }
+
+  async changeHostname(newHostname: string): Promise<void> {
+    await this.client.rename(this.uuid, { name: this.name, hostname: newHostname });
+  }
+}
+
+/**
+ * Reinstall server request
+ */
+export interface ReinstallServerRequest {
+  account_password: string;
+  start_on_completion: boolean;
+  template_uuid: string;
 } 
